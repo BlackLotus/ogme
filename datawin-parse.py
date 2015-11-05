@@ -1,6 +1,6 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
-import os,sys
+import os, sys
 import binascii
 import struct
 import StringIO
@@ -11,106 +11,108 @@ import StringIO
 # 4 bytes for the name (FORM) and 4 bytes for the length (filesize-8)
 # so this is not needed anymore
 
-#dwheader=binascii.unhexlify("464F524DE6EF5A03")
-datawin=open("data.win","r+")
-#datawin.seek(0,2)
-#dwsize=datawin.tell()
-#datawin.seek(0,0)
-#header=datawin.read(8)
-chunks={}
+# dwheader=binascii.unhexlify("464F524DE6EF5A03")
+datawin = open("data.win", "r+")
+# datawin.seek(0,2)
+# dwsize=datawin.tell()
+# datawin.seek(0,0)
+# header=datawin.read(8)
+chunks = {}
 
-#if header==dwheader:
+# if header==dwheader:
 #    print "Doogie doogie Dodger"
-#else:
+# else:
 #    print "Wrong magic bytes"
 #    quit()
 
+
 def read_chunk(data):
     # data has to be a StringIO/file... not!
-    if type(data)!=type("foo"):
+    if type(data) != type("foo"):
         print "Somehow the data is not a string"
         quit()
     else:
-        dsize=len(binascii.hexlify(data))/2
-        data=StringIO.StringIO(data)
-    data.seek(0,0)
-    chunkname=data.read(4)
+        dsize = len(binascii.hexlify(data)) / 2
+        data = StringIO.StringIO(data)
+    data.seek(0, 0)
+    chunkname = data.read(4)
     if chunkname.isupper():
-        print "Reading "+chunkname
+        print "Reading " + chunkname
     else:
-        print "Reading "+binascii.hexlify(chunkname)
-    chunksize=data.read(4)
-    if len(chunksize)!=4:
-        data.seek(0,0)
+        print "Reading " + binascii.hexlify(chunkname)
+    chunksize = data.read(4)
+    if len(chunksize) != 4:
+        data.seek(0, 0)
         return [data.read()]
     # TODO: _THIS_ is stupid! ... let's correct this with a nice struct or somethin
     # later...
-    foo=binascii.hexlify(chunksize)
-    chunksize=foo[-2:]+foo[4:6]+foo[2:4]+foo[:2]
-    chunksize=int(chunksize,16)
-    if chunksize+8==dsize:
-        chunk=data.read(chunksize)
+    foo = binascii.hexlify(chunksize)
+    chunksize = foo[-2:] + foo[4:6] + foo[2:4] + foo[:2]
+    chunksize = int(chunksize, 16)
+    if chunksize + 8 == dsize:
+        chunk = data.read(chunksize)
         return [chunkname, chunk]
-    elif chunksize+8 > dsize:
-        data.seek(0,0)
+    elif chunksize + 8 > dsize:
+        data.seek(0, 0)
         return [data.read()]
     else:
-        chunk=data.read(chunksize)
-        rest=data.read()
-        if len(rest)==0:
+        chunk = data.read(chunksize)
+        rest = data.read()
+        if len(rest) == 0:
             print "Something went terrible, terrible WRONG :( WTF IS HAPPENING?????"
             return [chunkname, chunk]
         else:
             return [chunkname, chunk, rest]
 
+
 def extract_chunks(data):
-    if type(data)==type("Foo"):
-        realdatasize=len(data)
-        data=StringIO.StringIO(data)
+    if type(data) == type("Foo"):
+        realdatasize = len(data)
+        data = StringIO.StringIO(data)
     else:
-        realdatasize=len(data.read())
-    data.seek(0,2)
-    datasize=data.tell()
-    if datasize!=realdatasize:
+        realdatasize = len(data.read())
+    data.seek(0, 2)
+    datasize = data.tell()
+    if datasize != realdatasize:
         print "OK WHY ISN'T THIS WORKING??"
         quit()
-    data.seek(0,0)
-    while data.tell()!=datasize:
-        chunk=read_chunk(data.read())
-        if len(chunk)==1:
+    data.seek(0, 0)
+    while data.tell() != datasize:
+        chunk = read_chunk(data.read())
+        if len(chunk) == 1:
             return chunk[0]
-        elif len(chunk)==2:
+        elif len(chunk) == 2:
             print "One big chunk you chump"
-            if type(chunk[1])==type("foo"):
-                return {chunk[0]:extract_chunks(chunk[1])}
+            if type(chunk[1]) == type("foo"):
+                return {chunk[0]: extract_chunks(chunk[1])}
             else:
                 print "OMG LIKE THAT'S TOTALLY LIKE A DICTIONARY THAT SOMEHOW GOT LIKE RETURNED! WHAT THE EFF"
-                return {chunk[0]:chunk[1]}
-        elif len(chunk)==3:
-            if type(chunk[1])==type("foo"):
-                newchunk={chunk[0]:extract_chunks(chunk[1])}
+                return {chunk[0]: chunk[1]}
+        elif len(chunk) == 3:
+            if type(chunk[1]) == type("foo"):
+                newchunk = {chunk[0]: extract_chunks(chunk[1])}
             else:
-                newchunk={chunk[0]:chunk[1]}
-            if type(chunk[2])==type("foo"):
-                newdict=extract_chunks(chunk[2])
-                if type(newdict)==type({}):
+                newchunk = {chunk[0]: chunk[1]}
+            if type(chunk[2]) == type("foo"):
+                newdict = extract_chunks(chunk[2])
+                if type(newdict) == type({}):
                     newchunk.update(newdict)
                 else:
                     print "Ok this is a defect... this shouldn't happen.I mean _never_. It means I split a chunk that wasn't a chunk.This is a fail.... correct it... somehow"
-                    newchunk.update({"DEFECT":newdict})
+                    newchunk.update({"DEFECT": newdict})
             else:
                 newchunk.update(chunk[2])
             return newchunk
 
-final_dict=extract_chunks(datawin)
-#print type(final_dict)
+final_dict = extract_chunks(datawin)
+# print type(final_dict)
 print len(final_dict["FORM"]["STRG"])
 print type(final_dict["FORM"]["STRG"])
-#for foo in final_dict["FORM"]:
+# for foo in final_dict["FORM"]:
 #    print foo
-#while datawin.tell()!=dsize:
-    #extract chunk from data
-    #übergib chunk to while like this
+# while datawin.tell()!=dsize:
+# extract chunk from data
+# übergib chunk to while like this
 
 
 # chunk=read_chunk(datawin)
@@ -123,7 +125,7 @@ print type(final_dict["FORM"]["STRG"])
 # if check_chunk(StringIO.StringIO(chunk[1]))==0:
 #     chunk=read_chunk(StringIO.StringIO(chunk[1]))
 
-#while dwsize!=datawin.tell():
+# while dwsize!=datawin.tell():
 #    chunk=read_chunk()
 #    chunks[chunk[0]]=chunk[1]
 
