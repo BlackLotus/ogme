@@ -33,13 +33,6 @@ def read_chunk(data):
     else:
         dsize=len(binascii.hexlify(data))/2
         data=StringIO.StringIO(data)
-#    data.seek(0,2)
-#    dsize=datawin.tell()
-#    if dsize!=realdsize:
-#        print dsize
-#        print realdsize
-#        print "FUCK THIS SHIT I'M GOING HOME"
-#        quit()
     data.seek(0,0)
     chunkname=data.read(4)
     if chunkname.isupper():
@@ -56,22 +49,14 @@ def read_chunk(data):
     chunksize=foo[-2:]+foo[4:6]+foo[2:4]+foo[:2]
     chunksize=int(chunksize,16)
     if chunksize+8==dsize:
-        # print "One big chunk"
         chunk=data.read(chunksize)
         return [chunkname, chunk]
     elif chunksize+8 > dsize:
-        # print "No chunk for you" # pure data
         data.seek(0,0)
         return [data.read()]
     else:
-        # print "Multiple CHUNKS!!!!! xD ohh I'm sooo tired"
         chunk=data.read(chunksize)
         rest=data.read()
-        # print chunksize
-        # print "Actual chunk size "+str(len(chunk))
-        # print dsize
-        # print "REST:"
-        # print len(rest)
         if len(rest)==0:
             print "Something went terrible, terrible WRONG :( WTF IS HAPPENING?????"
             return [chunkname, chunk]
@@ -111,6 +96,7 @@ def extract_chunks(data):
                 if type(newdict)==type({}):
                     newchunk.update(newdict)
                 else:
+                    print "Ok this is a defect... this shouldn't happen.I mean _never_. It means I split a chunk that wasn't a chunk.This is a fail.... correct it... somehow"
                     newchunk.update({"DEFECT":newdict})
             else:
                 newchunk.update(chunk[2])
